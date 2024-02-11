@@ -155,7 +155,13 @@ func (c *Config) Describe() {
 				tmp += "\n\t" + t
 				for option, values := range options {
 					for _, value := range values {
-						tmp += colors.Faint.Sprintf("\n\t  ✧ --%s=%s", option, value)
+						var optionSlice = optionToSlice(option, value)
+						if len(optionSlice) == 1 {
+							// No value (Bool)
+							tmp += colors.Faint.Sprintf("\n\t  ✧ --%s", option)
+						} else {
+							tmp += colors.Faint.Sprintf("\n\t  ✧ --%s=%s", option, value)
+						}
 					}
 				}
 			}
@@ -281,16 +287,19 @@ func optionToString(option string) string {
 	return option
 }
 
+func optionToSlice(key string, value interface{}) []string {
+	// Bool
+	asBool, ok := value.(bool)
+	if ok && asBool {
+		return []string{optionToString(key)}
+	}
+	return []string{optionToString(key), fmt.Sprint(value)}
+}
+
 func appendOptionsToSlice(str *[]string, options OptionMap) {
 	for key, values := range options {
 		for _, value := range values {
-			// Bool
-			asBool, ok := value.(bool)
-			if ok && asBool {
-				*str = append(*str, optionToString(key))
-				continue
-			}
-			*str = append(*str, optionToString(key), fmt.Sprint(value))
+			*str = append(*str, optionToSlice(key, value)...)
 		}
 	}
 }
